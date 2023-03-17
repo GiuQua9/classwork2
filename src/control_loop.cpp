@@ -7,13 +7,15 @@ CONTROLLER::CONTROLLER(float kp_, float kd_, float ki_) {
     _kp = kp_;
     _ki = ki_;
     _kd = kd_;
-    _system_init = false;
+
+    _eps = 0.001;
+
     _first_des_value = false;
 
     CONTROLLER::system_start();
     
     //We can also run important thread of our system
-    boost::thread loop_t( &CONTROLLER::loop, this );                //Main control loop
+    boost::thread loop_t( &CONTROLLER::loop, this);                //Main control loop
     
     //boost::thread NAME_THREAD( &CLASS_OF_THE_FUNCT::NAME_OF_THE_FUNCTION, CONTEXT, PARAMETERS )
 }
@@ -39,6 +41,8 @@ void CONTROLLER::system_start() {
 
 void CONTROLLER::loop() {
 
+    ofstream myfile;
+
     double e = 0.0;
     double ep = 0.0;
     double de = 0.0;
@@ -54,6 +58,10 @@ void CONTROLLER::loop() {
         usleep(0.1*1e6);
     }
     cout << "LOOP" << endl;
+
+    myfile.open ("example.txt");
+    myfile << "reference: " << _xdes << "\n";
+    myfile.close();
     
     _xdes == _xmes; //Set the initial value
 
@@ -72,9 +80,16 @@ void CONTROLLER::loop() {
         c += pid*dt;
 
         cout << "System error: " << e << " System output: " << c << endl;
+        myfile.open ("example.txt", ios::app);
+        myfile << "System error: " << e << " System output: " << c << "\n";
+        myfile.close();
+
+        if(abs(e)<_eps) break;
 
         usleep(10000);  //10000 microseconds = 0.01 seconds = 100Hz
 
         _xmes = c;      //System simulation: we assume that the output of the system is it's current value
     }
+    
+    
 }
