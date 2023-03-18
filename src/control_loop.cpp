@@ -1,12 +1,10 @@
 #include "control_loop.h"
 
 //We can use the class constructor to set parameters
-CONTROLLER::CONTROLLER(float kp_, float kd_, float ki_) {
-
-    //Init
-    _kp = kp_;
-    _ki = ki_;
-    _kd = kd_;
+CONTROLLER::CONTROLLER(float kp, float kd, float ki) {
+    _kp = kp;
+    _ki = ki;
+    _kd = kd;
 
     _eps = 0.001;
 
@@ -14,7 +12,7 @@ CONTROLLER::CONTROLLER(float kp_, float kd_, float ki_) {
 
     CONTROLLER::system_start();
     
-    //We can also run important thread of our system
+    //Run thread of our system
     boost::thread loop_t( &CONTROLLER::loop, this);                //Main control loop
     
     //boost::thread NAME_THREAD( &CLASS_OF_THE_FUNCT::NAME_OF_THE_FUNCTION, CONTEXT, PARAMETERS )
@@ -25,7 +23,7 @@ CONTROLLER::CONTROLLER(float kp_, float kd_, float ki_) {
 void CONTROLLER::set_xdes(double x) {
     _xdes = x;
 
-    _first_des_value = true;
+    _first_des_value = true; //start controller
 }
 
 
@@ -44,7 +42,6 @@ void CONTROLLER::loop() {
     ofstream myfile;
 
     double e = 0.0;
-    double ep = 0.0;
     double de = 0.0;
     double ie = 0.0;
 
@@ -52,11 +49,12 @@ void CONTROLLER::loop() {
     double c = 0.0;
     double dt = 1.0/100.0;
 
-    //It's always convenient to wait the correct start of the system
-    //To avoid to work with old (uninitialized values) 
+    //Waiting for the first desired value
     while(!_first_des_value ) {
         usleep(0.1*1e6);
     }
+
+
     cout << "LOOP" << endl;
 
     myfile.open ("example.txt");
@@ -70,7 +68,7 @@ void CONTROLLER::loop() {
 
         //PID errors
         e = _xdes - _xmes;
-        de = (e - ep) / dt;
+        de = e / dt;
         ie += e*dt;
 
         //PID action
@@ -79,9 +77,9 @@ void CONTROLLER::loop() {
         //Output: control = control * time 
         c += pid*dt;
 
-        cout << "System error: " << e << " System output: " << c << endl;
+        cout << "PID error: " << e << " output: " << c << endl;
         myfile.open ("example.txt", ios::app);
-        myfile << "System error: " << e << " System output: " << c << "\n";
+        myfile << "PID error: " << e << " output: " << c << "\n";
         myfile.close();
 
         if(abs(e)<_eps) break;
@@ -90,6 +88,4 @@ void CONTROLLER::loop() {
 
         _xmes = c;      //System simulation: we assume that the output of the system is it's current value
     }
-    
-    
 }
