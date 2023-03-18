@@ -74,7 +74,7 @@ void CONTROLLER::loop() {
         //PID action
         pid = _kp*e+ _kd*de + _ki*ie;
 
-        //Output: control = control * time 
+        //Output
         c += pid*dt;
 
         cout << "PID error: " << e << " output: " << c << endl;
